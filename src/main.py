@@ -58,7 +58,7 @@ def get_wifi():
 connect_wifi()
 print("Connecting to Blynk @ %s:%s" % (BLYNK_CFG['server'], BLYNK_CFG['port']))
 blynk = blynklib.Blynk(
-    BLYNK_CFG['token'], server=BLYNK_CFG['server'], port=8443, log=print)
+    BLYNK_CFG['token'], server=BLYNK_CFG['server'], port=8443)
 
 
 @blynk.handle_event("connect")
@@ -86,6 +86,20 @@ def handle_toggle(pin, value):
     servo.write_angle(SWITCH_HOME)
     time.sleep_ms(250)
     servo.write_us(0)
+
+
+@blynk.handle_event('read V2')
+def handle_read_sig_strength(pin):
+    wifi = get_wifi()
+    strength = abs(wifi.status('rssi'))
+    blynk.virtual_write(pin, strength)
+
+
+@blynk.handle_event('read V3')
+def handle_read_ip_addr(pin):
+    wifi = get_wifi()
+    ip_addr = wifi.ifconfig()[0]
+    blynk.virtual_write(pin, ip_addr)
 
 
 while True:
