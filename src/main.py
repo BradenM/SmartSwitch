@@ -1,6 +1,6 @@
 from micropython import const
 import network
-import time
+import utime as time
 from machine import Pin
 from servo import Servo
 import blynklib
@@ -10,7 +10,7 @@ import ujson
 with open('secrets.json') as s:
     secrets = ujson.loads(s.read())
     WIFI = secrets['WIFI']
-    BLYNK_AUTH = secrets["BLYNK_AUTH"]
+    BLYNK_CFG = secrets['BLYNK']
 
 # Servo Def
 servo_pin = Pin(15)
@@ -56,7 +56,9 @@ def get_wifi():
 
 # Setup
 connect_wifi()
-blynk = blynklib.Blynk(BLYNK_AUTH)
+print("Connecting to Blynk @ %s:%s" % (BLYNK_CFG['server'], BLYNK_CFG['port']))
+blynk = blynklib.Blynk(
+    BLYNK_CFG['token'], server=BLYNK_CFG['server'], port=8443, log=print)
 
 
 @blynk.handle_event("connect")
