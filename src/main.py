@@ -31,6 +31,18 @@ fan_servo.write_angle(SWITCH_HOME)
 # Blynk Msgs
 CONNECT_PRINT_MSG = '[Blynk] Connected!'
 DISCONNECT_PRINT_MSG = '[Blynk] Disconnected!'
+# Blynk Virtual Pins
+V = {
+    'LIGHT': 'V0',
+    'FAN': 'V1',
+    'SIGSTR': 'V2',
+    'IPADDR': 'V3',
+    'SONICAVG': 'V4',
+}
+BW = (lambda pin: "write %s" % V[pin])  # Blynk Write
+BR = (lambda pin: "read %s" % V[pin])  # Blynk Read
+BP = (lambda pin: int(V[pin][1]))  # Blynk Pin
+
 
 # Ultrasonic Sensor
 usonic = HCSR04(trigger_pin=5, echo_pin=4)
@@ -88,26 +100,26 @@ def disconnect_handler():
     print(DISCONNECT_PRINT_MSG)
 
 
-@blynk.handle_event('write V0')
+@blynk.handle_event(BW("LIGHT"))
 def handle_toggle_light(pin, value):
     val = int(value[0])
     return toggle(light_servo, val)
 
 
-@blynk.handle_event('write V1')
+@blynk.handle_event(BW("FAN"))
 def handle_toggle_fan(pin, value):
     val = int(value[0])
     return toggle(fan_servo, val)
 
 
-@blynk.handle_event('read V2')
+@blynk.handle_event(BR("SIGSTR"))
 def handle_read_sig_strength(pin):
     wifi = get_wifi()
     strength = abs(wifi.status('rssi'))
     blynk.virtual_write(pin, strength)
 
 
-@blynk.handle_event('read V3')
+@blynk.handle_event(BR("IPADDR"))
 def handle_read_ip_addr(pin):
     wifi = get_wifi()
     ip_addr = wifi.ifconfig()[0]
@@ -163,15 +175,15 @@ def eval_sonic():
     sonic_avg = int(sum(SONIC_READ) / len(SONIC_READ))
     if sonic_avg <= SONIC_HIGH_TRIG and sonic_avg > SONIC_LOW_TRIG:
         if blynk.connected():
-            blynk.virtual_write(0, int(not light_servo.state))
-            blynk.virtual_write(4, sonic_avg)
+            blynk.virtual_write(BP('LIGHT'), int(not light_servo.state))
+            blynk.virtual_write(BP('SONICAVG'), sonic_avg)
         SONIC_TIMEOUT = SONIC_TIMEOUT_TIME
         SONIC_READ = []
         return toggle(light_servo, not light_servo.state)
     if sonic_avg <= SONIC_LOW_TRIG and sonic_avg >= 1:
         if blynk.connected():
-            blynk.virtual_write(1, int(not fan_servo.state))
-            blynk.virtual_write(4, sonic_avg)
+            blynk.virtual_write(BP('FAN'), int(not fan_servo.state))
+            blynk.virtual_write(BP('SONICAVG'), sonic_avg)
         SONIC_TIMEOUT = SONIC_TIMEOUT_TIME
         SONIC_READ = []
         return toggle(fan_servo, not fan_servo.state)
