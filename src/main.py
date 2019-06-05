@@ -154,16 +154,18 @@ def eval_sonic():
     if len(SONIC_READ) < 15:
         return None
     sonic_avg = int(sum(SONIC_READ) / len(SONIC_READ))
-    if sonic_avg <= 300 and sonic_avg >= 150:
+    if sonic_avg <= 200 and sonic_avg >= 61:
         if blynk.connected():
             blynk.virtual_write(0, int(not light_servo.state))
-        SONIC_TIMEOUT = 20
+            blynk.virtual_write(4, sonic_avg)
+        SONIC_TIMEOUT = 10
         SONIC_READ = []
         return toggle(light_servo, not light_servo.state)
-    if sonic_avg <= 100 and sonic_avg >= 0:
+    if sonic_avg <= 60 and sonic_avg >= 0:
         if blynk.connected():
             blynk.virtual_write(1, int(not fan_servo.state))
-        SONIC_TIMEOUT = 20
+            blynk.virtual_write(4, sonic_avg)
+        SONIC_TIMEOUT = 10
         SONIC_READ = []
         return toggle(fan_servo, not fan_servo.state)
 
