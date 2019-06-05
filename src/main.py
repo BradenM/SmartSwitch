@@ -37,6 +37,12 @@ usonic = HCSR04(trigger_pin=5, echo_pin=4)
 SONIC_READ = []
 SONIC_TIMEOUT = 0
 
+# Ultrasonic Config
+SONIC_TIMEOUT_TIME = const(2)
+SONIC_READ_COUNT = const(10)
+SONIC_HIGH_TRIG = const(200)  # mm
+SONIC_LOW_TRIG = const(75)  # mm
+
 
 def connect_wifi():
     '''Connect to Wifi'''
@@ -134,38 +140,39 @@ def toggle(servo, val):
 
 
 def get_sonic():
-    global SONIC_READ, usonic
+    global SONIC_READ, usonic, SONIC_HIGH_TRIG, SONIC_READ_COUNT
     dist = usonic.distance_mm()
-    if(dist >= 400):
+    if(dist >= SONIC_HIGH_TRIG + 100 or dist == 0):
         SONIC_READ = []
         return None
-    if len(SONIC_READ) >= 15:
+    if len(SONIC_READ) >= SONIC_READ_COUNT:
         SONIC_READ.pop(0)
     SONIC_READ.append(dist)
 
 
 def eval_sonic():
-    global SONIC_READ, SONIC_TIMEOUT
+    global SONIC_READ, SONIC_TIMEOUT, SONIC_TIMEOUT_TIME, SONIC_READ_COUNT
+    global SONIC_HIGH_TRIG, SONIC_LOW_TRIG
     gc.collect()
     if SONIC_TIMEOUT > 0:
         SONIC_TIMEOUT -= 1
         print("Sonic Timed Out @", SONIC_TIMEOUT)
         return None
-    if len(SONIC_READ) < 15:
+    if len(SONIC_READ) < SONIC_READ_COUNT:
         return None
     sonic_avg = int(sum(SONIC_READ) / len(SONIC_READ))
-    if sonic_avg <= 200 and sonic_avg >= 61:
+    if sonic_avg <= SONIC_HIGH_TRIG and sonic_avg > SONIC_LOW_TRIG:
         if blynk.connected():
             blynk.virtual_write(0, int(not light_servo.state))
             blynk.virtual_write(4, sonic_avg)
-        SONIC_TIMEOUT = 10
+        SONIC_TIMEOUT = SONIC_TIMEOUT_TIME
         SONIC_READ = []
         return toggle(light_servo, not light_servo.state)
-    if sonic_avg <= 60 and sonic_avg >= 0:
+    if sonic_avg <= SONIC_LOW_TRIG and sonic_avg >= 1:
         if blynk.connected():
             blynk.virtual_write(1, int(not fan_servo.state))
             blynk.virtual_write(4, sonic_avg)
-        SONIC_TIMEOUT = 10
+        SONIC_TIMEOUT = SONIC_TIMEOUT_TIME
         SONIC_READ = []
         return toggle(fan_servo, not fan_servo.state)
 
