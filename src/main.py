@@ -1,10 +1,17 @@
+import gc
 from micropython import const
 import network
 import utime as time
+from blynktimer import Timer
+gc.collect()
 from machine import Pin
 from servo import Servo
+gc.collect()
 import blynklib
+gc.collect()
 import ujson
+from hcsr04 import HCSR04
+gc.collect()
 
 # Load Secrets
 with open('secrets.json') as s:
@@ -29,7 +36,12 @@ fan_servo.write_angle(SWITCH_HOME)
 CONNECT_PRINT_MSG = '[Blynk] Connected!'
 DISCONNECT_PRINT_MSG = '[Blynk] Disconnected!'
 
+# Ultrasonic Sensor
+usonic = HCSR04(trigger_pin=5, echo_pin=4)
+SONIC_READ = []
 
+# Timer
+blynk_timer = Timer(no_timers_err=False)
 
 def connect_wifi():
     '''Connect to Wifi'''
@@ -125,7 +137,29 @@ def toggle(servo, val):
     servo.write_us(0)
 
 
+def get_sonic():
+    global SONIC_READ, usonic
+    dist = usonic.distance_mm()
+    if len(SONIC_READ) >= 15:
+        SONIC_READ.pop(0)
+    SONIC_READ.append(dist)
+
+@blynk_timer.register(interval=1)
+def eval_sonic():
+    global SONIC_READ
+    gc.collect()
+    sonic_avg = int(sum(SONIC_READ) / len(SONIC_READ))
+    if sonic_avg <= 300 and sonic_avg >= 100:
+        if blynk.connected():
+            blynk.virtual_write(0, int(not light_servo.state))
+        return toggle(light_servo, not light_servo.state)
+    if sonic_avg <= 100 and sonic_avg >= 0:
+        if blynk.connected():
+            blynk.virtual_write(1, int(not fan_servo.state))
+        return toggle(fan_servo, not fan_servo.state)
 
 
 while True:
     blynk.run()
+    blynk_timer.run()
+    get_sonic()
