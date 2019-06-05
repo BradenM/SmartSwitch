@@ -21,6 +21,7 @@ class Servo:
         self.freq = freq
         self.angle = angle
         self.pwm = PWM(pin, freq=freq, duty=0)
+        self.state = 0
 
     def write_us(self, us):
         """Set the signal to be ``us`` microseconds long. Zero disables it."""

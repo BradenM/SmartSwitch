@@ -13,18 +13,22 @@ with open('secrets.json') as s:
     BLYNK_CFG = secrets['BLYNK']
 
 # Servo Def
-servo_pin = Pin(15)
-servo = Servo(servo_pin)
+light_servo_pin = Pin(14)
+fan_servo_pin = Pin(15)
+light_servo = Servo(light_servo_pin)
+fan_servo = Servo(fan_servo_pin)
 
 # Servo Constants
 SWITCH_HIGH = const(130)
 SWITCH_LOW = const(50)
 SWITCH_HOME = const(90)
-SWITCH_STATE = True
-servo.write_angle(SWITCH_HOME)
+light_servo.write_angle(SWITCH_HOME)
+fan_servo.write_angle(SWITCH_HOME)
 
+# Blynk Msgs
 CONNECT_PRINT_MSG = '[Blynk] Connected!'
 DISCONNECT_PRINT_MSG = '[Blynk] Disconnected!'
+
 
 
 def connect_wifi():
@@ -54,6 +58,7 @@ def get_wifi():
     return wifi
 
 
+
 # Setup
 connect_wifi()
 print("Connecting to Blynk @ %s:%s" % (BLYNK_CFG['server'], BLYNK_CFG['port']))
@@ -72,20 +77,14 @@ def disconnect_handler():
 
 
 @blynk.handle_event('write V0')
-def handle_toggle(pin, value):
-    global SWITCH_HIGH, SWITCH_LOW, SWITCH_HOME
+def handle_toggle_light(pin, value):
     val = int(value[0])
-    switch_to = SWITCH_HIGH
-    if not val:
-        switch_to = SWITCH_LOW
-        print("Turning off")
-    else:
-        print("Turning On")
-    servo.write_angle(switch_to)
-    time.sleep_ms(250)
-    servo.write_angle(SWITCH_HOME)
-    time.sleep_ms(250)
-    servo.write_us(0)
+    return toggle(light_servo, val)
+
+@blynk.handle_event('write V1')
+def handle_toggle_fan(pin, value):
+    val = int(value[0])
+    return toggle(fan_servo, val)
 
 
 @blynk.handle_event('read V2')
@@ -100,6 +99,32 @@ def handle_read_ip_addr(pin):
     wifi = get_wifi()
     ip_addr = wifi.ifconfig()[0]
     blynk.virtual_write(pin, ip_addr)
+
+def get_servo_states(servo):
+    global SWITCH_HIGH, SWITCH_LOW
+    if servo is light_servo:
+        return (SWITCH_LOW, SWITCH_HIGH)
+    return (SWITCH_HIGH, SWITCH_LOW)
+
+
+def toggle(servo, val):
+    global SWITCH_HOME
+    HIGH, LOW = get_servo_states(servo)
+    switch_to = HIGH
+    if not val:
+        switch_to = LOW
+        servo.state = 0
+        print("Turning off")
+    else:
+        servo.state = 1
+        print("Turning On")
+    servo.write_angle(switch_to)
+    time.sleep_ms(250)
+    servo.write_angle(SWITCH_HOME)
+    time.sleep_ms(250)
+    servo.write_us(0)
+
+
 
 
 while True:
