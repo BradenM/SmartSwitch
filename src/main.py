@@ -137,6 +137,7 @@ def get_sonic():
     global SONIC_READ, usonic
     dist = usonic.distance_mm()
     if(dist >= 400):
+        SONIC_READ = []
         return None
     if len(SONIC_READ) >= 15:
         SONIC_READ.pop(0)
