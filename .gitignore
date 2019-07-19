@@ -143,3 +143,6 @@ dmypy.json
 
 # Ignore secrets.json
 secrets.json
+
+# Ignore micropy folder
+.micropy/*

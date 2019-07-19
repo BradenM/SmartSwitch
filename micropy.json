@@ -1,0 +1,6 @@
+{
+  "name": "SmartSwitch",
+  "stubs": {
+    "esp8266-pycopy-1.11.0": "1.2.0"
+  }
+}

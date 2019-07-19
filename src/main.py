@@ -1,12 +1,14 @@
-import utime as time
-import network
-from micropython import const
-from machine import Pin
-from servo import Servo
 import gc
-from hcsr04 import HCSR04
-import ujson
+
 import blynklib
+import network
+import ujson
+import utime as time
+from hcsr04 import HCSR04
+from machine import Pin
+from micropython import const
+from servo import Servo
+
 gc.collect()
 
 # Load Secrets
