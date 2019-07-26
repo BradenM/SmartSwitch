@@ -1,5 +1,2 @@
-micropy-cli
 blynklib
-blynktimer
-servo
-hcsr04
+mPython-hcsr04

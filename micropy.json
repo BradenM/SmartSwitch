@@ -1,6 +1,17 @@
 {
-  "name": "SmartSwitch",
-  "stubs": {
-    "esp8266-pycopy-1.11.0": "1.2.0"
-  }
+    "name": "SmartSwitch",
+    "stubs": {
+        "esp8266-pycopy-1.11.0": "1.2.0"
+    },
+    "config": {
+        "vscode": true,
+        "pylint": true
+    },
+    "packages": {
+        "blynklib": "*",
+        "mPython-hcsr04": "*"
+    },
+    "dev-packages": {
+        "micropy-cli": "*"
+    }
 }
