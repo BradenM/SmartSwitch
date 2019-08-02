@@ -1,4 +1,5 @@
 import gc
+import logging
 
 import blynklib
 import network
@@ -11,6 +12,10 @@ from servo import Servo
 
 gc.collect()
 
+# Log Setup
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger("SmartSwitch")
+
 # Load Secrets
 with open('secrets.json') as s:
     secrets = ujson.loads(s.read())
@@ -18,8 +23,8 @@ with open('secrets.json') as s:
     BLYNK_CFG = secrets['BLYNK']
 
 # Servo Def
-light_servo_pin = Pin(14)
-fan_servo_pin = Pin(15)
+light_servo_pin = Pin(15)
+fan_servo_pin = Pin(14)
 light_servo = Servo(light_servo_pin)
 fan_servo = Servo(fan_servo_pin)
 
@@ -64,15 +69,15 @@ def connect_wifi():
     passwd = WIFI['passwd']
     wifi = network.WLAN(network.STA_IF)
     if wifi.isconnected():
-        print("Connected to %s" % ssid)
+        log.info("Connected to %s" % ssid)
         get_wifi()
         return wifi
-    print("Connecting to %s..." % ssid)
+    log.info("Connecting to %s..." % ssid)
     wifi.active(True)
     wifi.connect(ssid, passwd)
     while not wifi.isconnected():
         pass
-    print("Wifi Connected Successfully")
+    log.info("Wifi Connected Successfully")
     return get_wifi()
 
 
@@ -81,25 +86,27 @@ def get_wifi():
     wifi = network.WLAN(network.STA_IF)
     if not wifi.isconnected():
         return connect_wifi()
-    print("IP: %s" % wifi.ifconfig()[0])
+    log.info("IP: %s" % wifi.ifconfig()[0])
     return wifi
 
 
 # Setup
 connect_wifi()
-print("Connecting to Blynk @ %s:%s" % (BLYNK_CFG['server'], BLYNK_CFG['port']))
+blynk_log = logging.getLogger("Blynk")
+log.info("Connecting to Blynk @ %s:%s" %
+         (BLYNK_CFG['server'], BLYNK_CFG['port']))
 blynk = blynklib.Blynk(
-    BLYNK_CFG['token'], server=BLYNK_CFG['server'], port=8443)
+    BLYNK_CFG['token'], server=BLYNK_CFG['server'], port=8443, log=blynk_log.debug)
 
 
 @blynk.handle_event("connect")
 def connect_handler():
-    print(CONNECT_PRINT_MSG)
+    log.info(CONNECT_PRINT_MSG)
 
 
 @blynk.handle_event("disconnect")
 def disconnect_handler():
-    print(DISCONNECT_PRINT_MSG)
+    log.info(DISCONNECT_PRINT_MSG)
 
 
 @blynk.handle_event(BW("LIGHT"))
@@ -142,10 +149,10 @@ def toggle(servo, val):
     if not val:
         switch_to = LOW
         servo.state = 0
-        print("Turning off")
+        log.info("Turning off")
     else:
         servo.state = 1
-        print("Turning On")
+        log.info("Turning On")
     servo.write_angle(switch_to)
     time.sleep_ms(250)
     servo.write_angle(SWITCH_HOME)
@@ -170,7 +177,7 @@ def eval_sonic():
     gc.collect()
     if SONIC_TIMEOUT > 0:
         SONIC_TIMEOUT -= 1
-        print("Sonic Timed Out @", SONIC_TIMEOUT)
+        log.warning("Sonic Timed Out @ %s" % SONIC_TIMEOUT)
         return None
     if len(SONIC_READ) < SONIC_READ_COUNT:
         return None

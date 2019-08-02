@@ -1,2 +1,3 @@
 blynklib
 mPython-hcsr04
+pycopy-logging

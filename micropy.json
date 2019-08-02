@@ -9,7 +9,8 @@
     },
     "packages": {
         "blynklib": "*",
-        "mPython-hcsr04": "*"
+        "mPython-hcsr04": "*",
+        "pycopy-logging": "*"
     },
     "dev-packages": {
         "micropy-cli": "*"
