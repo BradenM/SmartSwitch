@@ -96,7 +96,9 @@ blynk_log = logging.getLogger("Blynk")
 log.info("Connecting to Blynk @ %s:%s" %
          (BLYNK_CFG['server'], BLYNK_CFG['port']))
 blynk = blynklib.Blynk(
-    BLYNK_CFG['token'], server=BLYNK_CFG['server'], port=8443, log=blynk_log.debug)
+    BLYNK_CFG['token'],
+    server=BLYNK_CFG['server'],
+    port=8443, log=blynk_log.debug)
 
 
 @blynk.handle_event("connect")
@@ -136,6 +138,7 @@ def handle_read_ip_addr(pin):
 
 
 def get_servo_states(servo):
+    """Retrieve servo states"""
     global SWITCH_HIGH, SWITCH_LOW
     if servo is light_servo:
         return (SWITCH_LOW, SWITCH_HIGH)
@@ -143,6 +146,7 @@ def get_servo_states(servo):
 
 
 def toggle(servo, val):
+    """Toggle a switch"""
     global SWITCH_HOME
     HIGH, LOW = get_servo_states(servo)
     switch_to = HIGH
@@ -161,6 +165,7 @@ def toggle(servo, val):
 
 
 def get_sonic():
+    """Retrieve Sonic Value"""
     global SONIC_READ, usonic, SONIC_HIGH_TRIG, SONIC_READ_COUNT
     dist = usonic.distance_mm()
     if(dist >= SONIC_HIGH_TRIG + 100 or dist == 0):
@@ -171,7 +176,20 @@ def get_sonic():
     SONIC_READ.append(dist)
 
 
+def toggle_sonic(servo, v_pin, sonic_avg):
+    """Toggle Wrapper Function for Sonic Sensor"""
+    global SONIC_TIMEOUT, SONIC_READ, SONIC_TIMEOUT_TIME
+    if blynk.connected():
+        blynk.virtual_write(BP(v_pin), int(not servo.state))
+        blynk.virtual_write(BP('SONICAVG'), sonic_avg)
+    log.info("Sonic Average: %s" % sonic_avg)
+    SONIC_TIMEOUT = SONIC_TIMEOUT_TIME
+    SONIC_READ = []
+    return toggle(servo, not servo.state)
+
+
 def eval_sonic():
+    """Evaluate Sonic Sensor"""
     global SONIC_READ, SONIC_TIMEOUT, SONIC_TIMEOUT_TIME, SONIC_READ_COUNT
     global SONIC_HIGH_TRIG, SONIC_LOW_TRIG
     gc.collect()
@@ -183,19 +201,10 @@ def eval_sonic():
         return None
     sonic_avg = int(sum(SONIC_READ) / len(SONIC_READ))
     if sonic_avg <= SONIC_HIGH_TRIG and sonic_avg > SONIC_LOW_TRIG:
-        if blynk.connected():
-            blynk.virtual_write(BP('LIGHT'), int(not light_servo.state))
-            blynk.virtual_write(BP('SONICAVG'), sonic_avg)
-        SONIC_TIMEOUT = SONIC_TIMEOUT_TIME
-        SONIC_READ = []
-        return toggle(light_servo, not light_servo.state)
+        return toggle_sonic(light_servo, "LIGHT", sonic_avg)
+
     if sonic_avg <= SONIC_LOW_TRIG and sonic_avg >= 1:
-        if blynk.connected():
-            blynk.virtual_write(BP('FAN'), int(not fan_servo.state))
-            blynk.virtual_write(BP('SONICAVG'), sonic_avg)
-        SONIC_TIMEOUT = SONIC_TIMEOUT_TIME
-        SONIC_READ = []
-        return toggle(fan_servo, not fan_servo.state)
+        return toggle_sonic(fan_servo, "FAN", sonic_avg)
 
 
 while True:
