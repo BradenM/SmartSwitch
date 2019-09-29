@@ -1,0 +1,23 @@
+{
+    "python.linting.enabled": true,
+    "python.autoComplete.extraPaths": [
+        ".micropy/pycopy/frozen",
+        ".micropy/esp8266-pycopy-1.11.0/frozen",
+        ".micropy/esp8266-pycopy-1.11.0/stubs",
+        ".micropy/smartswitch"
+    ],
+    "python.autoComplete.typeshedPaths": [
+        ".micropy/pycopy/frozen",
+        ".micropy/esp8266-pycopy-1.11.0/frozen",
+        ".micropy/esp8266-pycopy-1.11.0/stubs",
+        ".micropy/smartswitch"
+    ],
+    "python.analysis.typeshedPaths": [
+        ".micropy/pycopy/frozen",
+        ".micropy/esp8266-pycopy-1.11.0/frozen",
+        ".micropy/esp8266-pycopy-1.11.0/stubs",
+        ".micropy/smartswitch"
+    ],
+    "python.linting.pylintEnabled": true,
+    "python.jediEnabled": false
+}
